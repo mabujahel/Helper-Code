@@ -1,0 +1,78 @@
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.68/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+
+
+
+<script>
+
+    // Slightly adapted function from this SO answer: https://stackoverflow.com/a/21937796/2159528
+    // It now returns the objects formatted for pdfMake
+    pdfMake.fonts = {
+        Roboto: {
+            normal: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.2/fonts/Roboto/Roboto-Regular.ttf',
+            bold: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.2/fonts/Roboto/Roboto-Medium.ttf',
+            italics: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.2/fonts/Roboto/Roboto-Italic.ttf',
+            bolditalics: 'https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.2/fonts/Roboto/Roboto-MediumItalic.ttf'
+        },
+        Arabic: {
+            normal: 'https://cdnjs.cloudflare.com/HelveticaNeueW23-Reg.ttf',
+            bold: 'https://cdnjs.cloudflare.com/HelveticaNeueW23-Reg.ttf',
+            italics: 'https://cdnjs.cloudflare.com/HelveticaNeueW23-Reg.ttf',
+            bolditalics: 'https://cdnjs.cloudflare.com/HelveticaNeueW23-Reg.ttf '
+        }
+    };
+
+    function getClippedRegion(image, x, y, width, height) {
+        var canvas = document.createElement("canvas"),
+            ctx = canvas.getContext("2d");
+
+        canvas.width = width;
+        canvas.height = height;
+
+        // source region dest. region
+        ctx.drawImage(image, x, y, width, height, 0, 0, width, height);
+
+        return {
+            // Those are some pdfMake params
+            image: canvas.toDataURL(),
+            width: 500
+        };
+    }
+
+    function DownloadFile() { 
+        blockui($("body")); 
+        html2canvas($("#pageContent")[0], {
+        allowTaint: true,
+        useCORS: false,
+        logging: true,
+        foreignObjectRendering: true,
+        imageTimeout: 1500,
+        pageMargins: [1, 20, 0, 10],  // [left, top, right, bottom]
+
+    }).then(function (canvas) {
+        let splitAt = 775; // A page height which fits for "LETTER" pageSize...
+
+        let images = [];
+        let y = 0;
+        while (canvas.height > y) {
+            images.push(getClippedRegion(canvas, 0, y, canvas.width, splitAt));
+            y += splitAt;
+        }
+
+        // PDF creation using pdfMake
+        var docDefinition = {
+            content: images,
+            defaultStyle: {
+                font: 'Arabic'
+            },
+            pageSize: 'A4'
+        };
+
+        examTitle = $("#ExamTitleForPrint").val();
+        pdfMake.createPdf(docDefinition).download(`${examTitle}.pdf`);
+      
+
+    });
+    }
+
+</script>
